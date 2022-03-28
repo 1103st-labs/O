@@ -2,12 +2,13 @@
 Installs a repo, source, or package.
 """
 import argparse as ap
-from runtime import STATE, ENV
+import runtime
 import errors
 import re
 import urllib.request
 import json
 import state
+import out
 
 INSTALL_TYPES = ["repo", "source", "package"]
 EXPORT_TYPES = ["cli", "gui", "service", "internal"]
@@ -27,7 +28,27 @@ def install_repo(uri: str):
         repo_json = json.loads(repo_json, cls=state.OJSONDecoder)
     except (json.JSONDecodeError, FileNotFoundError):
         raise errors.ORunErr("Malformed Repo Json.")
-    STATE['repos'] = repo_json
+    runtime.STATE['repos'].append(repo_json)
+
+def install_source(uri: str):
+    """
+    Installs a repo from a uri.
+
+    :args uri: The uri to pull from.
+    """
+    reg = re.search(r'(https?:\/\/[\w./:]*)\|\|(\w*)', uri)
+    repos = [x for y in runtime.STATE['repos'] for x in y]
+    sources = {o.short_name: o for o in repos}
+    choice = ""
+    if (not reg):
+        out.info("Not a uri, searching...", 1)
+        choices = list(sources.keys())
+        choices = list(filter(lambda x: re.search(f'.*{uri}.*', x), choices))
+        choice = out.pick(choices)
+    elif(reg.group(1) and reg.group(2)):
+        out.info("Uri for repo and source provided.", 3)
+
+        
 
 
 

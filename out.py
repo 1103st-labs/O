@@ -75,3 +75,31 @@ def bar(step_count: int) -> None:
     for x in range(step_count):
         yield x
 
+def prompt(text: str) -> str:
+    """
+    A wraper for input()
+
+    :args text: the question.
+    :return: User input.
+    """
+    return input(text)
+
+def pick(options: list[str]) -> str:
+    """
+    Prompts the user to choose from list.
+
+    :args options: The list of options to choose from.
+    :returns: The chosen str.
+    """
+    print(f'Choose from the following')
+    for i, x in enumerate(options):
+        print(f' {i} :: {x}')
+    tmp = ""
+    err = ">"
+    while ((tmp := prompt(err)) not in [str(x) for x in range(len(options))]):
+        err = "Invalid choice >"
+    return options[int(tmp)]
+
+
+
+

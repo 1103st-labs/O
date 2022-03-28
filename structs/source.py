@@ -21,5 +21,6 @@ class Source():
     last_upgrade: datetime
     last_full_upgrade: datetime
     installed_packages: list[Package]
+    actions: dict[str, str]
     _source: int = 1
 
