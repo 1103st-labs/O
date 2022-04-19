@@ -84,11 +84,61 @@ def install_source(uri: str):
         except sp.CalledProcessError as e:
             out.warn(f'Error while running source update sequence' f' - {e}', 1)
 
+def install_package(uri: str):
+    """
+    Installs a pakage from a repo.
 
+    :args uri: The uri to pull from.
+    """
+    reg = re.search(r'(https?:\/\/[\w./:]*)\|\|(\w*)\|\|(\w*)', uri)
+    repos = [x for y in runtime.STATE['repos'] for x in y]
+    sources = {o.short_name: o for o in repos}
+    package_lists = [x.package_lists for x in sources.values()]
+    package_lists = [x for s in package_lists for x in s]
+    packages = {o.package_name: o for o in package_lists}
+    uris = {x.repo_uri:x for x in runtime.STATE['repos']}
+    choice = ""
+    if (not reg):
+        out.info("Not a uri, searching...", 1)
+        choices = list(sources.keys())
+        choices = list(filter(lambda x: re.search(f'.*{uri}.*', x), choices))
+        choice = sources[out.pick(choices)]
+    elif(reg.group(1) and reg.group(2) and reg.group(3)):
+        out.info("Uri for repo and source and package provided.", 3)
+        if (reg.group(1) in uris):
+            out.info('Repo already instaled.', 2)
+        else:
+            out.warn('Repo not installed.', 2)
+            out.info(f'Will now attempt to installl {reg.group(1)}', 2)
+            install_repo(reg.group(1))
+            repos = [x for y in runtime.STATE['repos'] for x in y]
+            sources = {o.short_name: o for o in repos}
+        if (reg.group(2) in sources):
+            out.info('Found source', 2)
+            choice = sources[reg.group(2)]
+        else:
+            raise errors.ORunErr(f'Could not find a source with that name.')
 
-            
-
-
+    if(choice.is_installed):
+        out.warn(f'Source is already installed.', 1)
+    else:
+        out.info(f'Now Installing {choice.short_name}.', 1)
+        try:
+            out.info(f'Running init for {choice.short_name}.', 2)
+            t = sp.run(choice.actions['init'], shell=True, capture_output=True,
+                    check=True)
+        except sp.CalledProcessError as e:
+            raise errors.ORunErr(f'Error while running source install sequence'
+                                 f' - {e}')
+        out.info(f'Finished init for {choice.short_name}.', 2)
+        choice.is_installed = True
+        try:
+            out.info(f'Running update for {choice.short_name}.', 2)
+            t = sp.run(choice.actions['update'], shell=True, capture_output=True,
+                    check=True)
+            out.info(f'Finished update for {choice.short_name}.', 2)
+        except sp.CalledProcessError as e:
+            out.warn(f'Error while running source update sequence' f' - {e}', 1)
 
 
 def resolve(sub_cmd: str) -> None:

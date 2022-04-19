@@ -64,10 +64,6 @@ def install_source(uri: str) -> None:
         if (source in all_sources):
 
 
-
-
-
-
 def resolve(sub_cmd: str) -> None:
     """
     Takes the sub command args and and reloves it to the corect function.
